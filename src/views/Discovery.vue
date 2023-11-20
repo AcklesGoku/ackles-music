@@ -1,7 +1,123 @@
-<script type="text/javascript" setup></script>
+<script setup>
+import { ref } from 'vue'
+import {
+  discoveryGetBanner,
+  discoveryRecommend,
+  discoveryNewMusic,
+  discoveryMv,
+  discoverySongsUrl
+} from '@/api/discovery'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+//数据
+const banners = ref([])
+const playList = ref([])
+const newmusic = ref([])
+const mv = ref([])
+
+const emit = defineEmits(['getUrl'])
+
+//方法
+const getBanner = async () => {
+  const res = await discoveryGetBanner()
+  banners.value = res.data.banners
+}
+getBanner()
+const getRecommend = async () => {
+  const res = await discoveryRecommend()
+  playList.value = res.data.result
+}
+getRecommend()
+const toPlayList = (id) => {
+  router.push(`/music/playlist?id=${id}`)
+}
+const getNewMusic = async () => {
+  const res = await discoveryNewMusic()
+  newmusic.value = res.data.result
+}
+getNewMusic()
+const getMv = async () => {
+  const res = await discoveryMv()
+  mv.value = res.data.result
+}
+getMv()
+
+const playMusic = async (id) => {
+  const res = await discoverySongsUrl(id)
+  emit('getUrl', res.data.data[0].url)
+}
+const toMv = (id) => {
+  router.push(`/music/mv?id=${id}`)
+}
+</script>
 
 <template>
-  <div>discovery</div>
+  <div class="discovery-container">
+    <!-- 轮播图 -->
+    <el-carousel
+      interval="4000"
+      type="card"
+      height="230px"
+      indicator-position="outside"
+    >
+      <el-carousel-item v-for="(item, index) in banners" :key="index">
+        <img :src="item.imageUrl" alt="" />
+      </el-carousel-item>
+    </el-carousel>
+    <!-- 推荐歌单 -->
+    <div class="recommend">
+      <h3 class="title">推荐歌单</h3>
+      <div class="items">
+        <div class="item" v-for="item in playList" :key="item.id">
+          <div class="img-wrap" @click="toPlayList(item.id)">
+            <div class="desc-wrap">
+              <span class="desc">{{ item.copywriter }}</span>
+            </div>
+            <img :src="item.picUrl" alt="" />
+            <span class="iconfont icon-play"></span>
+          </div>
+          <p class="name">{{ item.name }}</p>
+        </div>
+      </div>
+    </div>
+    <!-- 最新音乐 -->
+    <div class="news">
+      <h3 class="title">最新音乐</h3>
+      <div class="items">
+        <div class="item" v-for="(item, index) in newmusic" :key="index">
+          <div class="img-wrap">
+            <img :src="item.picUrl" alt="" />
+            <span @click="playMusic(item.id)" class="iconfont icon-play"></span>
+          </div>
+          <div class="song-wrap">
+            <div class="song-name">{{ item.name }}</div>
+            <div class="singer">{{ item.song.artists[0].name }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 推荐MV -->
+    <div class="mvs">
+      <h3 class="title">推荐MV</h3>
+      <div class="items">
+        <div class="item" v-for="item in mv" :key="item.id">
+          <div class="img-wrap" @click="toMv(item.id)">
+            <img :src="item.picUrl" alt="" />
+            <span class="iconfont icon-play"></span>
+            <div class="num-wrap">
+              <div class="iconfont icon-play"></div>
+              <div class="num">{{ item.playCount }}</div>
+            </div>
+          </div>
+          <div class="info-wrap">
+            <div class="name">{{ item.copywriter }}</div>
+            <div class="singer">{{ item.artistName }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -153,8 +269,7 @@
           height: 100%;
           padding: 10px;
           font-size: 16px;
-          .song-name {
-          }
+
           .singer {
             font-size: 14px;
             color: gray;
